@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 
 
-function MiApi() {
+function MiApi({searchQuery}) {
     const [pokemones, setPokemones] = useState([])
     const URL = 'https://pokeapi.co/api/v2/pokemon?limit=100&offset=0'
 
@@ -10,7 +10,7 @@ function MiApi() {
         const response = await fetch(URL)
         const pokemonJSON = await response.json()
 
-        const pokemon = pokemonJSON.results.map(async (pokemon) => {
+        const pokemonData = pokemonJSON.results.map(async (pokemon) => {
           const res = await fetch(pokemon.url)
           const poke = await res.json()
           return {
@@ -19,12 +19,24 @@ function MiApi() {
             img: poke.sprites.other.dream_world.front_default
           }
         })
-        setPokemones(await Promise.all(pokemon))
         
+        const filteredPokemon = await Promise.all(pokemonData)
+        if (searchQuery){
+          const lowercaseQuery =searchQuery.toLowerCase()
+          const filteredResults = filteredPokemon.filter((pokemon) => {
+            return pokemon.name.toLowerCase().includes(lowercaseQuery)
+          })
+          const sortedResults = filteredResults.sort((a, b) => a.id - b.id);
+          setPokemones(sortedResults)
+        } else {
+          setPokemones(filteredPokemon)
+        }
+
+        // setPokemones(await Promise.all(pokemon))
       } 
 
       getPokemon()
-    }, [])
+    }, [searchQuery])
 
     return (
       <div className="MiApi">
